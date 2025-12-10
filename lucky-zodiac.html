@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>生肖五行查詢器</title>
+
+<style>
+/* ------------------------------ */
+/*           外框樣式             */
+/* ------------------------------ */
+body {
+    background: #f5f7fa;
+    font-family: 'Microsoft JhengHei', sans-serif;
+    padding: 20px;
+}
+
+.lucky-box {
+    max-width: 460px;
+    margin: 0 auto;
+    background: #ffffff;
+    padding: 28px;
+    border-radius: 18px;
+    border: 2px solid #e2e8f0;
+    box-shadow: 0px 10px 30px rgba(0,0,0,0.12);
+}
+
+/* 標題 */
+.lucky-box .title {
+    font-size: 20px;
+    font-weight: 700;
+    text-align: center;
+    margin-bottom: 22px;
+    color: #003366;
+}
+
+/* 標籤文字 */
+.lucky-box .label {
+    display: block;
+    margin-top: 14px;
+    font-weight: 600;
+    color: #003366;
+}
+
+/* 欄位與下拉 */
+.lucky-box input,
+.lucky-box select {
+    width: 100%;
+    padding: 12px 14px;
+    margin-top: 6px;
+    border-radius: 10px;
+    border: 1.5px solid #cbd5e1;
+    background: #ffffff;
+    font-size: 15px;
+}
+
+/* 按鈕 */
+.lucky-box button {
+    width: 100%;
+    padding: 14px;
+    margin-top: 18px;
+    font-size: 16px;
+    font-weight: 700;
+    border-radius: 12px;
+    color: #ffffff;
+    background: #003366;
+    border: none;
+    cursor: pointer;
+}
+.lucky-box button:hover {
+    background: #024c8c;
+}
+
+/* 結果區塊 */
+.lucky-box .result {
+    margin-top: 26px;
+    background: #e6f0ff;
+    padding: 18px;
+    border-left: 5px solid #003366;
+    border-radius: 12px;
+    line-height: 1.7;
+}
+
+/* 顏色標籤 */
+.tag {
+    display: inline-block;
+    padding: 4px 10px;
+    margin: 4px 4px 0 0;
+    border-radius: 6px;
+    font-size: 13px;
+    color: #003366;
+    border: 1px solid #003366;
+}
+
+.tag-綠{background:#c8e6c9;}
+.tag-青綠{background:#b2ebf2;}
+.tag-紅{background:#ffcdd2;}
+.tag-橘{background:#ffe0b2;}
+.tag-粉{background:#f8bbd0;}
+.tag-黃{background:#fff9c4;}
+.tag-卡其{background:#f0e5c9;}
+.tag-棕{background:#d7ccc8;}
+.tag-米色{background:#f5f5dc;}
+.tag-白{background:#ffffff;}
+.tag-銀{background:#e0e0e0;}
+.tag-金{background:#ffd54f;}
+.tag-灰{background:#eeeeee;}
+.tag-藍{background:#bbdefb;}
+.tag-黑{background:#cfcfcf; color:#000;}
+.tag-深藍{background:#b3cde0;}
+</style>
+
+</head>
+<body>
+
+<!-- ⭐ 查詢器主體 -->
+<div class="lucky-box">
+
+    <div class="title">✦ 生肖 × 五行 × 幸運色查詢 ✦</div>
+
+    <label class="label">請選擇生肖</label>
+    <select id="lzodiac">
+        <option value="">請選擇</option>
+        <option>鼠</option><option>牛</option><option>虎</option><option>兔</option>
+        <option>龍</option><option>蛇</option><option>馬</option><option>羊</option>
+        <option>猴</option><option>雞</option><option>狗</option><option>豬</option>
+    </select>
+
+    <label class="label">請輸入生日（例如：19990929）</label>
+    <input type="text" id="lbirthday" placeholder="19990929">
+
+    <button id="calcBtn">立即查詢</button>
+
+    <div id="lresult"></div>
+
+</div>
+
+<script>
+/* ------------------------------
+   五行對照資料
+   ------------------------------ */
+const l_zodiacFive = {
+    "鼠":"水","牛":"土","虎":"木","兔":"木",
+    "龍":"土","蛇":"火","馬":"火","羊":"土",
+    "猴":"金","雞":"金","狗":"土","豬":"水"
+};
+
+const l_stemFive = {
+    "甲":"木","乙":"木","丙":"火","丁":"火","戊":"土",
+    "己":"土","庚":"金","辛":"金","壬":"水","癸":"水"
+};
+
+const l_fiveColors = {
+    "木":["綠","青綠"],
+    "火":["紅","橘","粉"],
+    "土":["黃","卡其","棕","米色"],
+    "金":["白","銀","金","灰"],
+    "水":["藍","黑","深藍"]
+};
+
+/* 60 甲子 */
+const l_ganzhi60 = [
+    "甲子","乙丑","丙寅","丁卯","戊辰","己巳","庚午","辛未","壬申","癸酉",
+    "甲戌","乙亥","丙子","丁丑","戊寅","己卯","庚辰","辛巳","壬午","癸未",
+    "甲申","乙酉","丙戌","丁亥","戊子","己丑","庚寅","辛卯","壬辰","癸巳",
+    "甲午","乙未","丙申","丁酉","戊戌","己亥","庚子","辛丑","壬寅","癸卯",
+    "甲辰","乙巳","丙午","丁未","戊申","己酉","庚戌","辛亥","壬子","癸丑",
+    "甲寅","乙卯","丙辰","丁巳","戊午","己未","庚申","辛酉","壬戌","癸亥"
+];
+
+/* 取得日主天干 */
+function l_getDayStem(y,m,d){
+    const base = new Date(Date.UTC(1900,0,31));
+    const date = new Date(Date.UTC(y,m-1,d));
+    const diff = Math.floor((date - base) / 86400000);
+    return l_ganzhi60[(diff % 60 + 60) % 60].slice(0,1);
+}
+
+/* 標籤轉換 */
+function l_tags(arr){
+    return arr.map(c => `<span class="tag tag-${c}">${c}</span>`).join("");
+}
+
+/* 主函式 */
+function lucky_calc(){
+    const zodiac = document.getElementById("lzodiac").value;
+    const birth  = document.getElementById("lbirthday").value;
+    const output = document.getElementById("lresult");
+
+    if(!zodiac){
+        output.innerHTML = `<div class="result">請先選擇生肖</div>`;
+        return;
+    }
+    if(!/^\d{8}$/.test(birth)){
+        output.innerHTML = `<div class="result">生日格式錯誤，請輸入 19990929</div>`;
+        return;
+    }
+
+    const y = Number(birth.slice(0,4));
+    const m = Number(birth.slice(4,6));
+    const d = Number(birth.slice(6,8));
+
+    const stem = l_getDayStem(y,m,d);
+    const element = l_stemFive[stem];
+    const zFive = l_zodiacFive[zodiac];
+
+    output.innerHTML = `
+        <div class="result">
+        <b>你的生肖：</b>${zodiac}<br>
+        <b>生肖五行：</b>${zFive}<br>
+        <b>生肖代表色：</b><br>${l_tags(l_fiveColors[zFive])}<br><br>
+
+        <b>你的日主天干：</b>${stem}<br>
+        <b>本命五行：</b>${element}<br>
+        <b>本命能量色：</b><br>${l_tags(l_fiveColors[element])}
+        </div>
+    `;
+}
+
+document.getElementById("calcBtn").addEventListener("click", lucky_calc);
+</script>
+
+</body>
+</html>
